@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>做T收益计算器</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #111827;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+    }
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 8px;
+    }
+    .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .field {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 14px 12px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+    }
+    input:focus {
+      border-color: #9ca3af;
+    }
+    .btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .secondary {
+      background: #eef0f4;
+      color: var(--text);
+    }
+    .result {
+      margin-top: 18px;
+      padding-top: 8px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 15px;
+    }
+    .row:last-child {
+      border-bottom: 0;
+    }
+    .total {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>做T收益计算器</h1>
+      <div class="sub">输入差价、卖价、股数。默认佣金万2，佣金最低5元/边，卖出印花税万5。</div>
+
+      <div class="field">
+        <label for="spread">差价</label>
+        <input id="spread" type="number" step="0.001" placeholder="例如 0.17" />
+      </div>
+
+      <div class="field">
+        <label for="sellPrice">卖价</label>
+        <input id="sellPrice" type="number" step="0.001" placeholder="例如 11.50" />
+      </div>
+
+      <div class="field">
+        <label for="shares">股数</label>
+        <input id="shares" type="number" step="100" placeholder="例如 100" />
+      </div>
+
+      <div class="btns">
+        <button class="primary" onclick="calculate()">计算</button>
+        <button class="secondary" onclick="resetForm()">清空</button>
+      </div>
+
+      <div class="result" id="result" style="display:none;">
+        <div class="row"><span>买入价</span><span id="buyPrice"></span></div>
+        <div class="row"><span>毛收益</span><span id="gross"></span></div>
+        <div class="row"><span>买入佣金</span><span id="buyCommission"></span></div>
+        <div class="row"><span>卖出佣金</span><span id="sellCommission"></span></div>
+        <div class="row"><span>印花税</span><span id="stampDuty"></span></div>
+        <div class="row total"><span>净收益</span><span id="net"></span></div>
+      </div>
+
+      <div class="muted">说明：这是按你当前口径做的快速估算，适合手机上秒算做T收益。</div>
+    </div>
+  </div>
+
+  <script>
+    function fmt(n) {
+      return Number(n).toFixed(2);
+    }
+
+    function calculate() {
+      const spread = parseFloat(document.getElementById('spread').value);
+      const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+      const shares = parseFloat(document.getElementById('shares').value);
+
+      if (!isFinite(spread) || !isFinite(sellPrice) || !isFinite(shares) || spread < 0 || sellPrice <= 0 || shares <= 0) {
+        alert('请输入正确的差价、卖价和股数');
+        return;
+      }
+
+      const buyPrice = sellPrice - spread;
+      const buyAmount = buyPrice * shares;
+      const sellAmount = sellPrice * shares;
+      const gross = spread * shares;
+      const buyCommission = Math.max(buyAmount * 0.0002, 5);
+      const sellCommission = Math.max(sellAmount * 0.0002, 5);
+      const stampDuty = sellAmount * 0.0005;
+      const net = gross - buyCommission - sellCommission - stampDuty;
+
+      document.getElementById('buyPrice').textContent = fmt(buyPrice);
+      document.getElementById('gross').textContent = fmt(gross);
+      document.getElementById('buyCommission').textContent = fmt(buyCommission);
+      document.getElementById('sellCommission').textContent = fmt(sellCommission);
+      document.getElementById('stampDuty').textContent = fmt(stampDuty);
+      document.getElementById('net').textContent = fmt(net);
+      document.getElementById('result').style.display = 'block';
+    }
+
+    function resetForm() {
+      document.getElementById('spread').value = '';
+      document.getElementById('sellPrice').value = '';
+      document.getElementById('shares').value = '';
+      document.getElementById('result').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
